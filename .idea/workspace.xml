@@ -1,17 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="19f7f2ac-4b4a-4d72-9d43-f2c00f9064e3" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/saved_logs/awd-lstm-base with 3layer LSTM" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PTB_DepLSTM0.pt" beforeDir="false" afterPath="$PROJECT_DIR$/PTB_DepLSTM0.pt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deplstm.py" beforeDir="false" afterPath="$PROJECT_DIR$/deplstm.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logs/PTB_DepLSTM_l3.pt.2018-08-23T17:44:28.676733.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/runs/Aug23_17-44-28_ju-cvlab/events.out.tfevents.1535013868.ju-cvlab" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runs/Aug23_17-44-28_ju-cvlab/settings" beforeDir="false" />
-    </list>
+    <list default="true" id="19f7f2ac-4b4a-4d72-9d43-f2c00f9064e3" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -150,8 +140,8 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="53" />
-    <option name="y" value="-4" />
+    <option name="x" value="5173" />
+    <option name="y" value="-1444" />
     <option name="width" value="2507" />
     <option name="height" value="1444" />
   </component>
@@ -270,7 +260,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="53" y="-4" width="2507" height="1444" extended-state="6" />
+    <frame x="5173" y="-1444" width="2507" height="1444" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.17391305" />
