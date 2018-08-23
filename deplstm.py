@@ -50,6 +50,7 @@ class HistoryAttention(nn.Module):
         self.history = []
         self.history_embs = []
 
+
     def detach_history(self):
         history = []
         for h in self.history:

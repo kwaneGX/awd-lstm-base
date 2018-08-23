@@ -106,7 +106,7 @@ else:
     corpus = data.Corpus(args.data)
     torch.save(corpus, fn)
 
-eval_batch_size = 10
+eval_batch_size = 1
 test_batch_size = 1
 train_data = batchify(corpus.train, args.batch_size, args)
 val_data = batchify(corpus.valid, eval_batch_size, args)
