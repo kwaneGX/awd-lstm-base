@@ -67,7 +67,7 @@ class RNNModel(nn.Module):
 
     def reset(self):
         if self.rnn_type == 'QRNN': [r.reset() for r in self.rnns]
-        if self.rnn_type == 'DepLSTM':
+.        if self.rnn_type == 'DepLSTM':
             if self.wdrop:
                 for rnn in self.rnns:
                     rnn.module.attention.reset_history()

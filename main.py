@@ -106,7 +106,7 @@ else:
     corpus = data.Corpus(args.data)
     torch.save(corpus, fn)
 
-eval_batch_size = 1
+eval_batch_size = 5
 test_batch_size = 1
 train_data = batchify(corpus.train, args.batch_size, args)
 val_data = batchify(corpus.valid, eval_batch_size, args)
@@ -310,9 +310,10 @@ try:
                 print('Saving model (new best validation)', file=logfile)
                 stored_loss = val_loss
 
-            if args.optimizer == 'sgd' and 't0' not in optimizer.param_groups[0] and (len(best_val_loss)>args.nonmono and val_loss > min(best_val_loss[:-args.nonmono])):
-                print('Switching to ASGD')
-                optimizer = torch.optim.ASGD(model.parameters(), lr=args.lr, t0=0, lambd=0., weight_decay=args.wdecay)
+            # taken out due to awd deplstm causes this
+            # if args.optimizer == 'sgd' and 't0' not in optimizer.param_groups[0] and (len(best_val_loss)>args.nonmono and val_loss > min(best_val_loss[:-args.nonmono])):
+            #     print('Switching to ASGD')
+            #     optimizer = torch.optim.ASGD(model.parameters(), lr=args.lr, t0=0, lambd=0., weight_decay=args.wdecay)
 
             if epoch in args.when:
                 print('Saving model before learning rate decreased')

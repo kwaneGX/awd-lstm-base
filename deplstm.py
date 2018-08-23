@@ -79,6 +79,9 @@ class DepLSTM(nn.LSTM):
         outputs = []
         for input in inputs:
             _, new_hx = super(DepLSTM, self).forward(input.unsqueeze(0), hx)
+            if not self.training:
+                new_hx = (new_hx[0].detach(), new_hx[1].detach())
+
             attended_feat = self.attention(new_hx[0][0], prev)
             gates = torch.sigmoid(self.gates(torch.cat([attended_feat, new_hx[0][0]], dim=1)))
             new_h = (attended_feat * gates[:, :attended_feat.size(1)]).unsqueeze(0) \
@@ -88,6 +91,13 @@ class DepLSTM(nn.LSTM):
             prev = new_h[0]
 
         return torch.cat(outputs, dim=0), hx
+
+    def detach(self):
+        history = []
+        for h in self.history:
+            history.append(h.detach())
+        self.history = history
+        self.history_embs = []
 
 
 if __name__ == '__main__':
