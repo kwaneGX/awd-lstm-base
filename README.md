@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # LSTM and QRNN Language Model Toolkit
 
 This repository contains the code used for two [Salesforce Research](https://einstein.ai/) papers:
@@ -138,3 +139,9 @@ For full details, refer to the [PyTorch QRNN repository](https://github.com/sale
 All the augmentations to the LSTM, including our variant of [DropConnect (Wan et al. 2013)](https://cs.nyu.edu/~wanli/dropc/dropc.pdf) termed weight dropping which adds recurrent dropout, allow for the use of NVIDIA's cuDNN LSTM implementation.
 PyTorch will automatically use the cuDNN backend if run on CUDA with cuDNN installed.
 This ensures the model is fast to train even when convergence may take many hundreds of epochs.
+=======
+# awd-lstm-base
+awd-lstm-base
+
+1. `sh getdata.sh`
+>>>>>>> 5bc2525df900be83d35aea6eba4f3fa57c98c913
