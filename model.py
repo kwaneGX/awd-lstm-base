@@ -56,9 +56,18 @@ class RNNModel(nn.Module):
         self.dropouth = dropouth
         self.dropoute = dropoute
         self.tie_weights = tie_weights
+        self.wdrop = wdrop
 
     def reset(self):
         if self.rnn_type == 'QRNN': [r.reset() for r in self.rnns]
+
+        if self.rnn_type == 'DepLSTM':
+            if self.wdrop:
+                for rnn in self.rnns:
+                    rnn.module.attention.reset_history()
+            else:
+                for rnn in self.rnns:
+                    rnn.attention.reset_history()
 
     def init_weights(self):
         initrange = 0.1

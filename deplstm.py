@@ -29,8 +29,7 @@ class HistoryAttention(nn.Module):
             if len(self.history) > self.max_history_size:
                 self.history = self.history[-self.max_history_size:]
 
-            # added by Ju
-            self.history_embs = [self.history_net(h) for h in self.history if h.size()[0] != 10]
+            self.history_embs = [self.history_net(h) for h in self.history]
 
         current_emb = self.hidden_net(current)  # B x att_hidden_size
 
