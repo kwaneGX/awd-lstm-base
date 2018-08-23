@@ -2,14 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="19f7f2ac-4b4a-4d72-9d43-f2c00f9064e3" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/other.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/awd-lstm-base.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/awd-lstm-base.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PTB_DepLSTM0.pt" beforeDir="false" afterPath="$PROJECT_DIR$/PTB_DepLSTM0.pt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/runs/Aug23_14-44-19_ju-cvlab/events.out.tfevents.1535003059.ju-cvlab" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runs/Aug23_14-44-19_ju-cvlab/settings" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/settings-template" beforeDir="false" afterPath="$PROJECT_DIR$/runs/settings-template" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -24,7 +17,7 @@
     <session id="-58064569">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="2" />
+          <entry key="project.closed" value="3" />
           <entry key="project.open.time.0" value="3" />
           <entry key="project.opened" value="3" />
         </counts>
@@ -61,8 +54,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="904">
-              <caret line="238" column="25" selection-start-line="238" selection-start-column="25" selection-end-line="238" selection-end-column="25" />
+            <state relative-caret-position="334">
+              <caret line="200" column="96" lean-forward="true" selection-start-line="200" selection-start-column="96" selection-end-line="200" selection-end-column="96" />
               <folding>
                 <element signature="e#0#15#0" expanded="true" />
               </folding>
@@ -143,7 +136,7 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="-5067" />
+    <option name="x" value="53" />
     <option name="y" value="-4" />
     <option name="width" value="2507" />
     <option name="height" value="1444" />
@@ -359,8 +352,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="904">
-          <caret line="238" column="25" selection-start-line="238" selection-start-column="25" selection-end-line="238" selection-end-column="25" />
+        <state relative-caret-position="334">
+          <caret line="200" column="96" lean-forward="true" selection-start-line="200" selection-start-column="96" selection-end-line="200" selection-end-column="96" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
           </folding>

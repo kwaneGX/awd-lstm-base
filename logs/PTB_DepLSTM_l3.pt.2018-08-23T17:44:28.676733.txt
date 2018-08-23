@@ -1,0 +1,39 @@
+[WeightDrop(
+  (module): DepLSTM(
+    400, 1150
+    (attention): HistoryAttention(
+      (history_net): Linear(in_features=1150, out_features=1150, bias=True)
+      (hidden_net): Linear(in_features=1150, out_features=1150, bias=True)
+      (attention_net): Conv1d(1150, 1, kernel_size=(1,), stride=(1,))
+      (projection_net): Linear(in_features=1150, out_features=1150, bias=True)
+    )
+    (gates): Linear(in_features=2300, out_features=2300, bias=True)
+  )
+), WeightDrop(
+  (module): DepLSTM(
+    1150, 1150
+    (attention): HistoryAttention(
+      (history_net): Linear(in_features=1150, out_features=1150, bias=True)
+      (hidden_net): Linear(in_features=1150, out_features=1150, bias=True)
+      (attention_net): Conv1d(1150, 1, kernel_size=(1,), stride=(1,))
+      (projection_net): Linear(in_features=1150, out_features=1150, bias=True)
+    )
+    (gates): Linear(in_features=2300, out_features=2300, bias=True)
+  )
+), WeightDrop(
+  (module): DepLSTM(
+    1150, 400
+    (attention): HistoryAttention(
+      (history_net): Linear(in_features=400, out_features=400, bias=True)
+      (hidden_net): Linear(in_features=400, out_features=400, bias=True)
+      (attention_net): Conv1d(400, 1, kernel_size=(1,), stride=(1,))
+      (projection_net): Linear(in_features=400, out_features=400, bias=True)
+    )
+    (gates): Linear(in_features=800, out_features=800, bias=True)
+  )
+)]
+Args: Namespace(alpha=2, batch_size=20, beta=1, bptt=70, clip=0.25, cuda=True, data='data/penn', dropout=0.4, dropoute=0.1, dropouth=0.25, dropouti=0.4, emsize=400, epochs=500, log_interval=200, lr=30, model='DepLSTM', nhid=1150, nlayers=3, nonmono=5, optimizer='sgd', resume='', save='PTB_DepLSTM_l3.pt', seed=141, tied=True, wdecay=1.2e-06, wdrop=0.5, when=[-1])
+Model total parameters: 43872803
+| epoch   1 |   200/  663 batches | lr 30.00000 | ms/batch 701.48 | loss  7.12 | ppl  1241.56 | bpc   10.278
+| epoch   1 |   400/  663 batches | lr 30.00000 | ms/batch 687.01 | loss  6.65 | ppl   770.65 | bpc    9.590
+| epoch   1 |   600/  663 batches | lr 30.00000 | ms/batch 734.10 | loss  6.59 | ppl   725.87 | bpc    9.504
