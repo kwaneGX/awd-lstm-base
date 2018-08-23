@@ -9,7 +9,7 @@ from deplstm import DepLSTM
 class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
 
-    def __init__(self, rnn_type, ntoken, ninp, nhid, nlayers, dropout=0.5, dropouth=0.5, dropouti=0.5, dropoute=0.1, wdrop=0, tie_weights=False):
+    def __init__(self, rnn_type, ntoken, ninp, nhid, nlayers, dropout=0.5, dropouth=0.5, dropouti=0.5, dropoute=0.1, wdrop=0, tie_weights=False, logfile=None):
         super(RNNModel, self).__init__()
         self.lockdrop = LockedDropout()
         self.idrop = nn.Dropout(dropouti)
@@ -21,7 +21,11 @@ class RNNModel(nn.Module):
             self.rnns = [DepLSTM(ninp if l == 0 else nhid, nhid if l != nlayers - 1 else (ninp if tie_weights else nhid), 1, dropout=0) for l in range(nlayers)]
             if wdrop:
                 self.rnns = [WeightDrop(rnn, ['weight_hh_l0'], dropout=wdrop) for rnn in self.rnns]
-        if rnn_type == 'GRU':
+        elif rnn_type == 'LSTM':
+            self.rnns = [torch.nn.LSTM(ninp if l == 0 else nhid, nhid if l != nlayers - 1 else (ninp if tie_weights else nhid), 1, dropout=0) for l in range(nlayers)]
+            if wdrop:
+                self.rnns = [WeightDrop(rnn, ['weight_hh_l0'], dropout=wdrop) for rnn in self.rnns]
+        elif rnn_type == 'GRU':
             self.rnns = [torch.nn.GRU(ninp if l == 0 else nhid, nhid if l != nlayers - 1 else ninp, 1, dropout=0) for l in range(nlayers)]
             if wdrop:
                 self.rnns = [WeightDrop(rnn, ['weight_hh_l0'], dropout=wdrop) for rnn in self.rnns]
@@ -31,6 +35,8 @@ class RNNModel(nn.Module):
             for rnn in self.rnns:
                 rnn.linear = WeightDrop(rnn.linear, ['weight'], dropout=wdrop)
         print(self.rnns)
+        if logfile is not None:
+            print(self.rnns, file=logfile)
         self.rnns = torch.nn.ModuleList(self.rnns)
         self.decoder = nn.Linear(nhid, ntoken)
 
@@ -60,7 +66,6 @@ class RNNModel(nn.Module):
 
     def reset(self):
         if self.rnn_type == 'QRNN': [r.reset() for r in self.rnns]
-
         if self.rnn_type == 'DepLSTM':
             if self.wdrop:
                 for rnn in self.rnns:
