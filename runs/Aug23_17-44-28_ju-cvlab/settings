@@ -1,8 +1,0 @@
-model_saved:
-PTB_DepLSTM_l3.pt
-
-command:
-python main.py --batch_size 20 --data data/penn --dropouti 0.4 --dropouth 0.25 --seed 141 --epoch 500 --save PTB_DepLSTM_l3.pt --model DepLSTM --nlayers 3
-
-memory:
-8715 MiB

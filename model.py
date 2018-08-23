@@ -5,6 +5,7 @@ from embed_regularize import embedded_dropout
 from locked_dropout import LockedDropout
 from weight_drop import WeightDrop
 from deplstm import DepLSTM
+import gc
 
 class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
@@ -73,6 +74,8 @@ class RNNModel(nn.Module):
             else:
                 for rnn in self.rnns:
                     rnn.attention.reset_history()
+        torch.cuda.empty_cache()
+        collected = gc.collect()
 
     def init_weights(self):
         initrange = 0.1
