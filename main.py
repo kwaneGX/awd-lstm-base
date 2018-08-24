@@ -4,6 +4,7 @@ import math
 import numpy as np
 import torch
 import torch.nn as nn
+import settings
 
 import data
 import model
@@ -47,8 +48,10 @@ parser.add_argument('--seed', type=int, default=1111,
                     help='random seed')
 parser.add_argument('--nonmono', type=int, default=5,
                     help='random seed')
-parser.add_argument('--cuda', action='store_false',
-                    help='use CUDA')
+# parser.add_argument('--cuda', action='store_false',
+#                     help='use CUDA')
+parser.add_argument('--cuda', type=int, default=0,
+                    help='use number')
 parser.add_argument('--log-interval', type=int, default=200, metavar='N',
                     help='report interval')
 randomhash = ''.join(str(time.time()).split('.'))
@@ -70,6 +73,8 @@ args = parser.parse_args()
 args.tied = True
 
 # Set the random seed manually for reproducibility.
+settings.set_devcie(args.cuda)
+
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 if torch.cuda.is_available():
@@ -147,8 +152,8 @@ if not criterion:
     criterion = SplitCrossEntropyLoss(args.emsize, splits=splits, verbose=False)
 ###
 if args.cuda:
-    model = model.cuda()
-    criterion = criterion.cuda()
+    model = model.cuda(settings.device)
+    criterion = criterion.cuda(settings.device)
 ###
 params = list(model.parameters()) + list(criterion.parameters())
 total_params = sum(x.size()[0] * x.size()[1] if len(x.size()) > 1 else x.size()[0] for x in params if x.size())

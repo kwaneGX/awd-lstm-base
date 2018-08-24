@@ -8,6 +8,7 @@ from torch.autograd import Variable
 
 import data
 import model
+import settings
 
 from utils import batchify, get_batch, repackage_hidden
 
@@ -53,7 +54,7 @@ def one_hot(idx, size, cuda=True):
     a = np.zeros((1, size), np.float32)
     a[0][idx] = 1
     v = Variable(torch.from_numpy(a))
-    if cuda: v = v.cuda()
+    if cuda: v = v.cuda(settings.device)
     return v
 
 def evaluate(data_source, batch_size=10, window=args.window):

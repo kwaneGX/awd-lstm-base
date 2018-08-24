@@ -11,6 +11,7 @@ import torch
 from torch.autograd import Variable
 
 import data
+import settings
 
 parser = argparse.ArgumentParser(description='PyTorch PTB Language Model')
 
@@ -53,7 +54,7 @@ if args.model == 'QRNN':
     model.reset()
 
 if args.cuda:
-    model.cuda()
+    model.cuda(settings.device)
 else:
     model.cpu()
 
@@ -62,7 +63,7 @@ ntokens = len(corpus.dictionary)
 hidden = model.init_hidden(1)
 input = Variable(torch.rand(1, 1).mul(ntokens).long(), volatile=True)
 if args.cuda:
-    input.data = input.data.cuda()
+    input.data = input.data.cuda(settings.device)
 
 with open(args.outf, 'w') as outf:
     for i in range(args.words):

@@ -1,4 +1,5 @@
 import torch
+import settings
 
 
 def repackage_hidden(h):
@@ -18,7 +19,7 @@ def batchify(data, bsz, args):
     # Evenly divide the data across the bsz batches.
     data = data.view(bsz, -1).t().contiguous()
     if args.cuda:
-        data = data.cuda()
+        data = data.cuda(settings.device)
     return data
 
 
