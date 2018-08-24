@@ -48,10 +48,10 @@ parser.add_argument('--seed', type=int, default=1111,
                     help='random seed')
 parser.add_argument('--nonmono', type=int, default=5,
                     help='random seed')
-# parser.add_argument('--cuda', action='store_false',
-#                     help='use CUDA')
-parser.add_argument('--cuda', type=int, default=0,
-                    help='use number')
+parser.add_argument('--cuda', action='store_false',
+                    help='use CUDA')
+# parser.add_argument('--cuda', type=int, default=0,
+#                     help='use number')
 parser.add_argument('--log-interval', type=int, default=200, metavar='N',
                     help='report interval')
 randomhash = ''.join(str(time.time()).split('.'))
@@ -73,7 +73,6 @@ args = parser.parse_args()
 args.tied = True
 
 # Set the random seed manually for reproducibility.
-settings.set_devcie(args.cuda)
 
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
@@ -82,6 +81,7 @@ if torch.cuda.is_available():
         print("WARNING: You have a CUDA device, so you should probably run with --cuda")
     else:
         torch.cuda.manual_seed(args.seed)
+        settings.set_devcie(0)
 
 # added by Ju
 writer = SummaryWriter()
@@ -172,6 +172,7 @@ def evaluate(data_source, batch_size=10):
     model.reset()
     total_loss = 0
     ntokens = len(corpus.dictionary)
+    # with torch.no_grad():
     hidden = model.init_hidden(batch_size)
     for i in range(0, data_source.size(0) - 1, args.bptt):
         data, targets = get_batch(data_source, i, args, evaluation=True)
@@ -235,6 +236,7 @@ def train(epoch):
             print(logstr, file=logfile)
             total_loss = 0
             start_time = time.time()
+            break
 
         ###
         batch += 1

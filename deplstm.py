@@ -93,8 +93,8 @@ class DepLSTM(nn.LSTM):
         outputs = []
         for input in inputs:
             _, new_hx = super(DepLSTM, self).forward(input.unsqueeze(0), hx)
-            if not self.training:
-                new_hx = (new_hx[0].detach(), new_hx[1].detach())
+            # if not self.training:
+            #     new_hx = (new_hx[0].detach(), new_hx[1].detach())
 
             attended_feat = self.attention(new_hx[0][0], prev)
             gates = torch.sigmoid(self.gates(torch.cat([attended_feat, new_hx[0][0]], dim=1)))
