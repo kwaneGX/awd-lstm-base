@@ -10,6 +10,8 @@ class HistoryAttention(nn.Module):
 
         self.projection_net = nn.Linear(hidden_size, hidden_size)
 
+        self.dropout = nn.Dropout(p=0.5)
+
         self.max_history_size = max_history_size
 
         self.history_embs = []
@@ -35,14 +37,14 @@ class HistoryAttention(nn.Module):
 
         history_embs = torch.stack(self.history_embs, dim=2)  # B x att_hidden_size x history_length
         # B x att_hidden_size x history_length
-        hidden_embs = torch.tanh(history_embs + current_emb.unsqueeze(2).expand_as(history_embs))
+        hidden_embs = self.dropout(torch.tanh(history_embs + current_emb.unsqueeze(2).expand_as(history_embs)))
 
         att_scores = self.attention_net(hidden_embs)  # B x 1 x history_length
         att_probs = torch.softmax(att_scores, dim=2)  # B x 1 x history_length
 
         history = torch.stack(self.history, dim=2)  # B x hidden_size x history_length
         attended_history = history * att_probs.expand_as(history)  # B x hidden_size x history_length
-        attended_history = attended_history.sum(dim=2)  # B x hidden_size
+        attended_history = self.dropout(attended_history.sum(dim=2))  # B x hidden_size
 
         return torch.tanh(self.projection_net(attended_history))
 
