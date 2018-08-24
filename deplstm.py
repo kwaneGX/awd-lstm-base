@@ -1,6 +1,17 @@
 import torch
 import torch.nn as nn
 
+class LockedDropoutForAttention(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x, dropout=0.5):
+        if not self.training or not dropout:
+            return x
+        mask = x.data.new(x.size(0), x.size(1), 1).bernoulli_(1 - dropout) / (1 - dropout)
+        mask = mask.expand_as(x)
+        return mask * x
+
 class HistoryAttention(nn.Module):
     def __init__(self, hidden_size, att_hidden_size, max_history_size=15):
         super(HistoryAttention, self).__init__()
@@ -10,6 +21,7 @@ class HistoryAttention(nn.Module):
 
         self.projection_net = nn.Linear(hidden_size, hidden_size)
 
+        self.locked_dropout = LockedDropoutForAttention()
         self.dropout = nn.Dropout(p=0.5)
 
         self.max_history_size = max_history_size
@@ -37,7 +49,7 @@ class HistoryAttention(nn.Module):
 
         history_embs = torch.stack(self.history_embs, dim=2)  # B x att_hidden_size x history_length
         # B x att_hidden_size x history_length
-        hidden_embs = self.dropout(torch.tanh(history_embs + current_emb.unsqueeze(2).expand_as(history_embs)))
+        hidden_embs = self.locked_dropout(torch.tanh(history_embs + current_emb.unsqueeze(2).expand_as(history_embs)))
 
         att_scores = self.attention_net(hidden_embs)  # B x 1 x history_length
         att_probs = torch.softmax(att_scores, dim=2)  # B x 1 x history_length
