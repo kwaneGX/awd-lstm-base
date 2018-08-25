@@ -19,10 +19,10 @@ class HistoryAttention(nn.Module):
         self.hidden_net = nn.Linear(hidden_size, att_hidden_size)
         self.attention_net = nn.Conv1d(att_hidden_size, 1, 1, 1)
 
-        self.projection_net = nn.Linear(hidden_size, hidden_size)
+        # self.projection_net = nn.Linear(hidden_size, hidden_size)
 
-        self.locked_dropout = LockedDropoutForAttention()
-        self.dropout = nn.Dropout(p=0.5)
+        # self.locked_dropout = LockedDropoutForAttention()
+        # self.dropout = nn.Dropout(p=0.5)
 
         self.max_history_size = max_history_size
 
@@ -49,21 +49,23 @@ class HistoryAttention(nn.Module):
 
         history_embs = torch.stack(self.history_embs, dim=2)  # B x att_hidden_size x history_length
         # B x att_hidden_size x history_length
-        hidden_embs = self.locked_dropout(torch.tanh(history_embs + current_emb.unsqueeze(2).expand_as(history_embs)))
+        # hidden_embs = self.locked_dropout(torch.tanh(history_embs + current_emb.unsqueeze(2).expand_as(history_embs)))
+        hidden_embs = torch.tanh(history_embs + current_emb.unsqueeze(2).expand_as(history_embs))
 
         att_scores = self.attention_net(hidden_embs)  # B x 1 x history_length
         att_probs = torch.softmax(att_scores, dim=2)  # B x 1 x history_length
 
         history = torch.stack(self.history, dim=2)  # B x hidden_size x history_length
         attended_history = history * att_probs.expand_as(history)  # B x hidden_size x history_length
-        attended_history = self.dropout(attended_history.sum(dim=2))  # B x hidden_size
+        # attended_history = self.dropout(attended_history.sum(dim=2))  # B x hidden_size
+        attended_history = attended_history.sum(dim=2)  # B x hidden_size
 
-        return torch.tanh(self.projection_net(attended_history))
+        # return torch.tanh(self.projection_net(attended_history))
+        return attended_history
 
     def reset_history(self):
         self.history = []
         self.history_embs = []
-
 
     def detach_history(self):
         history = []
@@ -79,9 +81,10 @@ class DepLSTM(nn.LSTM):
         super(DepLSTM, self).__init__(input_size, hidden_size, num_layers, bias, batch_first, dropout, bidirectional)
         att_hidden_size = att_hidden_size if att_hidden_size is not None else hidden_size
         max_attention_size = max_attention_size if max_attention_size is not None else 15
-        self.attention = HistoryAttention(hidden_size, att_hidden_size)
+        self.attention = HistoryAttention(hidden_size, att_hidden_size, max_attention_size)
 
-        self.gates = nn.Linear(hidden_size+att_hidden_size, hidden_size+att_hidden_size, max_attention_size)
+        # self.gates = nn.Linear(hidden_size+att_hidden_size, hidden_size+att_hidden_size, max_attention_size)
+        self.gates = nn.Linear(hidden_size+hidden_size, hidden_size)
 
     def forward(self, inputs, hx=None):
         if hx is None:
@@ -98,20 +101,14 @@ class DepLSTM(nn.LSTM):
 
             attended_feat = self.attention(new_hx[0][0], prev)
             gates = torch.sigmoid(self.gates(torch.cat([attended_feat, new_hx[0][0]], dim=1)))
-            new_h = (attended_feat * gates[:, :attended_feat.size(1)]).unsqueeze(0) \
-                    + (new_hx[0][0] * gates[:, -new_hx[0][0].size(1):]).unsqueeze(0)
+            # new_h = (attended_feat * gates[:, :attended_feat.size(1)]).unsqueeze(0) \
+            #         + (new_hx[0][0] * gates[:, -new_hx[0][0].size(1):]).unsqueeze(0)
+            new_h = (attended_feat * gates).unsqueeze(0) + (new_hx[0][0] * (1-gates)).unsqueeze(0)
             outputs.append(new_h)
             hx = (new_h, new_hx[1])
             prev = new_h[0]
 
         return torch.cat(outputs, dim=0), hx
-
-    def detach(self):
-        history = []
-        for h in self.history:
-            history.append(h.detach())
-        self.history = history
-        self.history_embs = []
 
 
 if __name__ == '__main__':
@@ -130,7 +127,6 @@ if __name__ == '__main__':
     out, hidden = deplstm(inputs, hidden)
     print(out)
     print(hidden)
-
 
 
 
