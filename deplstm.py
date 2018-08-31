@@ -15,9 +15,12 @@ class LockedDropoutForAttention(nn.Module):
 class HistoryAttention(nn.Module):
     def __init__(self, hidden_size, att_hidden_size, max_history_size=15, p=0.5):
         super(HistoryAttention, self).__init__()
-        self.history_net = nn.Linear(hidden_size, att_hidden_size)
-        self.hidden_net = nn.Linear(hidden_size, att_hidden_size)
-        self.attention_net = nn.Conv1d(att_hidden_size, 1, 1, 1)
+        # self.history_net = nn.Linear(hidden_size, att_hidden_size)
+        # self.hidden_net = nn.Linear(hidden_size, att_hidden_size)
+        self.history_net = nn.Linear(hidden_size, 1)
+        self.hidden_net = nn.Linear(hidden_size, 1)
+
+        # self.attention_net = nn.Conv1d(att_hidden_size, 1, 1, 1)
 
         # self.projection_net = nn.Linear(hidden_size, hidden_size)
 
@@ -50,12 +53,13 @@ class HistoryAttention(nn.Module):
 
         history_embs = torch.stack(self.history_embs, dim=2)  # B x att_hidden_size x history_length
         # B x att_hidden_size x history_length
-        hidden_embs = self.locked_dropout(torch.tanh(history_embs + current_emb.unsqueeze(2).expand_as(history_embs)),
-                                          dropout=self.p)
+        # hidden_embs = self.locked_dropout(torch.tanh(history_embs + current_emb.unsqueeze(2).expand_as(history_embs)),
+        #                                   dropout=self.p)
         # hidden_embs = torch.tanh(history_embs + current_emb.unsqueeze(2).expand_as(history_embs))
 
-        att_scores = self.attention_net(hidden_embs)  # B x 1 x history_length
-        att_probs = torch.softmax(att_scores, dim=2)  # B x 1 x history_length
+        # att_scores = self.attention_net(hidden_embs)  # B x 1 x history_length
+        att_probs = torch.softmax(history_embs + current_emb.unsqueeze(2).expand_as(history_embs), dim=2)
+        # att_probs = torch.softmax(att_scores, dim=2)  # B x 1 x history_length
 
         history = torch.stack(self.history, dim=2)  # B x hidden_size x history_length
         attended_history = history * att_probs.expand_as(history)  # B x hidden_size x history_length
