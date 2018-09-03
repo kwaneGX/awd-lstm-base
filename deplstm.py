@@ -25,7 +25,7 @@ class HistoryAttention(nn.Module):
         # self.projection_net = nn.Linear(hidden_size, hidden_size)
 
         self.locked_dropout = LockedDropoutForAttention()
-        # self.dropout = nn.Dropout(p=0.5)
+        self.dropout = nn.Dropout(p=0.5)
 
         self.max_history_size = max_history_size
         self.p = p
@@ -34,6 +34,7 @@ class HistoryAttention(nn.Module):
         self.history = []
 
     def forward(self, current, previous):  # both in B x hidden_size
+        previous = self.dropout(previous)
         if len(self.history) == len(self.history_embs):
             self.history.append(previous)  # list of B x hidden_size tensors
             previous_emb = self.history_net(previous)  # B x att_hidden_size
@@ -49,6 +50,7 @@ class HistoryAttention(nn.Module):
 
             self.history_embs = [self.history_net(h) for h in self.history]
 
+        current = self.dropout(current)
         current_emb = self.hidden_net(current)  # B x att_hidden_size
 
         history_embs = torch.stack(self.history_embs, dim=2)  # B x att_hidden_size x history_length
