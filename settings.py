@@ -1,4 +1,4 @@
 
-def set_devcie(dev):
-    global device
-    device = dev
+def set_writer(wr):
+    global writer
+    writer = wr

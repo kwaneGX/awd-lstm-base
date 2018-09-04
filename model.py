@@ -6,6 +6,7 @@ from locked_dropout import LockedDropout
 from weight_drop import WeightDrop
 from deplstm import DepLSTM
 import gc
+import settings
 
 class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
@@ -83,9 +84,19 @@ class RNNModel(nn.Module):
         self.decoder.bias.data.fill_(0)
         self.decoder.weight.data.uniform_(-initrange, initrange)
 
-    def forward(self, input, hidden, return_h=False):
+    def forward(self, input, hidden, ith=None, return_h=False):
         emb = embedded_dropout(self.encoder, input, dropout=self.dropoute if self.training else 0)
         #emb = self.idrop(emb)
+        if len((emb != emb).nonzero()) > 0:
+            print('trap')
+        aaa = torch.stack([p.data for p in self.encoder.parameters()]).view(-1)
+        # print('max enconder weight', torch.max(aaa).item())
+        settings.writer.add_scalar('data/enc_w', torch.max(aaa).item(), ith)
+        for i in range(3):
+            # print('hidden at %d: ' % i, torch.max(hidden[i][0].view(-1)).item())
+            # print('cellst at %d: ' % i, torch.max(hidden[i][1].view(-1)).item())
+            settings.writer.add_scalars('data/hid_cel_w%d:' % i, {'hid': torch.max(hidden[i][0].view(-1)).item(),
+                                                                  'cel': torch.max(hidden[i][1].view(-1)).item()}, ith)
 
         emb = self.lockdrop(emb, self.dropouti)
 
