@@ -15,26 +15,18 @@ class LockedDropoutForAttention(nn.Module):
         return mask * x
 
 
-class DropoutNoScale(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, x, mask=None, dropout=0.5):
-        if not self.training or not dropout:
-            return x
-        nn
-        return mask * x
-
-
 class HistoryAttention(nn.Module):
-    def __init__(self, hidden_size, att_hidden_size, max_history_size=15, p=0.5):
+    # def __init__(self, hidden_size, att_hidden_size, max_history_size=15, p=0.5):
+    def __init__(self, input_size, hidden_size, att_hidden_size, max_history_size=15, p=0.5):  # Ju
         super(HistoryAttention, self).__init__()
         # self.history_net = nn.Linear(hidden_size, att_hidden_size)
         # self.hidden_net = nn.Linear(hidden_size, att_hidden_size)
         self.history_net = nn.Linear(hidden_size, 1)
-        self.hidden_net = nn.Linear(hidden_size, 1)
+        # self.hidden_net = nn.Linear(hidden_size, 1)
+        self.hidden_net = nn.Linear(input_size, 1)  # Ju
 
         # self.attention_net = nn.Conv1d(att_hidden_size, 1, 1, 1)
+        self.attention_net = nn.Conv1d(2, 1, 1, 1)
 
         # self.projection_net = nn.Linear(hidden_size, hidden_size)
 
@@ -53,16 +45,15 @@ class HistoryAttention(nn.Module):
     def forward(self, current, previous):  # both in B x hidden_size
 
         r"""For debugging"""
-        if torch.max(current.view(-1)) > 10 or torch.max(previous.view(-1)) > 10:
-            print('trap')
+        # if torch.max(current.view(-1)) > 10 or torch.max(previous.view(-1)) > 10:
+        #     print('trap')
         # print(previous.view(-1)[(previous.view(-1) > 10).nonzero()[0][0].item()].item())
         # print(current.view(-1)[(current.view(-1) > 10).nonzero()[0][0].item()].item())
         r"""==============="""
 
-        previous = self.dropout(previous)
         if len(self.history) == len(self.history_embs):
-            self.history.append(previous * 0.5)  # list of B x hidden_size tensors
-            previous_emb = self.history_net(previous)  # B x att_hidden_size
+            self.history.append(previous)  # list of B x hidden_size tensors
+            previous_emb = self.history_net(self.dropout(previous))  # B x att_hidden_size
             self.history_embs.append(previous_emb)
 
             if len(self.history) > self.max_history_size:
@@ -73,12 +64,13 @@ class HistoryAttention(nn.Module):
             if len(self.history) > self.max_history_size:
                 self.history = self.history[-self.max_history_size:]
 
-            self.history_embs = [self.history_net(h) for h in self.history]
+            self.history_embs = [self.history_net(self.dropout(h)) for h in self.history]
 
         current = self.dropout(current)
         current_emb = self.hidden_net(current)  # B x att_hidden_size
 
         history_embs = torch.stack(self.history_embs, dim=2)  # B x att_hidden_size x history_length
+
         # B x att_hidden_size x history_length
         # hidden_embs = self.locked_dropout(torch.tanh(history_embs + current_emb.unsqueeze(2).expand_as(history_embs)),
         #                                   dropout=self.p)
@@ -115,7 +107,8 @@ class DepLSTM(nn.LSTM):
         super(DepLSTM, self).__init__(input_size, hidden_size, num_layers, bias, batch_first, dropout, bidirectional)
         att_hidden_size = att_hidden_size if att_hidden_size is not None else hidden_size
         max_attention_size = max_attention_size if max_attention_size is not None else 15
-        self.attention = HistoryAttention(hidden_size, att_hidden_size, max_attention_size)
+        # self.attention = HistoryAttention(hidden_size, att_hidden_size, max_attention_size)
+        self.attention = HistoryAttention(input_size, hidden_size, att_hidden_size, max_attention_size)  # Ju
 
         # self.gates = nn.Linear(hidden_size+att_hidden_size, hidden_size+att_hidden_size, max_attention_size)
         self.gates = nn.Linear(hidden_size+hidden_size, hidden_size)
@@ -133,7 +126,8 @@ class DepLSTM(nn.LSTM):
             # if not self.training:
             #     new_hx = (new_hx[0].detach(), new_hx[1].detach())
 
-            attended_feat = self.attention(new_hx[0][0], prev)
+            # attended_feat = self.attention(new_hx[0][0], prev)
+            attended_feat = self.attention(input, prev)  # Ju
             gates = torch.sigmoid(self.gates(torch.cat([attended_feat, new_hx[0][0]], dim=1)))
             # new_h = (attended_feat * gates[:, :attended_feat.size(1)]).unsqueeze(0) \
             #         + (new_hx[0][0] * gates[:, -new_hx[0][0].size(1):]).unsqueeze(0)

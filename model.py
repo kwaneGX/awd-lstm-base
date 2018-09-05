@@ -89,14 +89,14 @@ class RNNModel(nn.Module):
         #emb = self.idrop(emb)
         if len((emb != emb).nonzero()) > 0:
             print('trap')
-        aaa = torch.stack([p.data for p in self.encoder.parameters()]).view(-1)
+        # aaa = torch.stack([p.data for p in self.encoder.parameters()]).view(-1)
         # print('max enconder weight', torch.max(aaa).item())
-        settings.writer.add_scalar('data/enc_w', torch.max(aaa).item(), ith)
-        for i in range(3):
+        # settings.writer.add_scalar('data/enc_w', torch.max(aaa).item(), ith)
+        # for i in range(3):
             # print('hidden at %d: ' % i, torch.max(hidden[i][0].view(-1)).item())
             # print('cellst at %d: ' % i, torch.max(hidden[i][1].view(-1)).item())
-            settings.writer.add_scalars('data/hid_cel_w%d:' % i, {'hid': torch.max(hidden[i][0].view(-1)).item(),
-                                                                  'cel': torch.max(hidden[i][1].view(-1)).item()}, ith)
+            # settings.writer.add_scalars('data/hid_cel_w%d:' % i, {'hid': torch.max(hidden[i][0].view(-1)).item(),
+            #                                                       'cel': torch.max(hidden[i][1].view(-1)).item()}, ith)
 
         emb = self.lockdrop(emb, self.dropouti)
 
