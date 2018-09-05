@@ -16,21 +16,17 @@ class LockedDropoutForAttention(nn.Module):
 
 
 class HistoryAttention(nn.Module):
-    # def __init__(self, hidden_size, att_hidden_size, max_history_size=15, p=0.5):
-    def __init__(self, input_size, hidden_size, att_hidden_size, max_history_size=15, p=0.5):  # Ju
+    def __init__(self, hidden_size, att_hidden_size, max_history_size=15, p=0.5):
         super(HistoryAttention, self).__init__()
         # self.history_net = nn.Linear(hidden_size, att_hidden_size)
         # self.hidden_net = nn.Linear(hidden_size, att_hidden_size)
         self.history_net = nn.Linear(hidden_size, 1)
-        # self.hidden_net = nn.Linear(hidden_size, 1)
-        self.hidden_net = nn.Linear(input_size, 1)  # Ju
+        self.hidden_net = nn.Linear(hidden_size, 1)
 
         # self.attention_net = nn.Conv1d(att_hidden_size, 1, 1, 1)
-        self.attention_net = nn.Conv1d(2, 1, 1, 1)
-
         # self.projection_net = nn.Linear(hidden_size, hidden_size)
-
         # self.locked_dropout = LockedDropoutForAttention()
+
         self.dropout = nn.Dropout(p=0.5)
 
         self.max_history_size = max_history_size
@@ -38,7 +34,6 @@ class HistoryAttention(nn.Module):
 
         self.history_embs = []
         self.history = []
-        self.dropmask = None
 
         self.itr = 0
 
@@ -98,7 +93,6 @@ class HistoryAttention(nn.Module):
             history.append(h.detach())
         self.history = history
         self.history_embs = []
-        self.dropmask = None
 
 
 class DepLSTM(nn.LSTM):
@@ -107,8 +101,7 @@ class DepLSTM(nn.LSTM):
         super(DepLSTM, self).__init__(input_size, hidden_size, num_layers, bias, batch_first, dropout, bidirectional)
         att_hidden_size = att_hidden_size if att_hidden_size is not None else hidden_size
         max_attention_size = max_attention_size if max_attention_size is not None else 15
-        # self.attention = HistoryAttention(hidden_size, att_hidden_size, max_attention_size)
-        self.attention = HistoryAttention(input_size, hidden_size, att_hidden_size, max_attention_size)  # Ju
+        self.attention = HistoryAttention(hidden_size, att_hidden_size, max_attention_size)
 
         # self.gates = nn.Linear(hidden_size+att_hidden_size, hidden_size+att_hidden_size, max_attention_size)
         self.gates = nn.Linear(hidden_size+hidden_size, hidden_size)
@@ -123,11 +116,8 @@ class DepLSTM(nn.LSTM):
         outputs = []
         for input in inputs:
             _, new_hx = super(DepLSTM, self).forward(input.unsqueeze(0), hx)
-            # if not self.training:
-            #     new_hx = (new_hx[0].detach(), new_hx[1].detach())
 
-            # attended_feat = self.attention(new_hx[0][0], prev)
-            attended_feat = self.attention(input, prev)  # Ju
+            attended_feat = self.attention(new_hx[0][0], prev)
             gates = torch.sigmoid(self.gates(torch.cat([attended_feat, new_hx[0][0]], dim=1)))
             # new_h = (attended_feat * gates[:, :attended_feat.size(1)]).unsqueeze(0) \
             #         + (new_hx[0][0] * gates[:, -new_hx[0][0].size(1):]).unsqueeze(0)
