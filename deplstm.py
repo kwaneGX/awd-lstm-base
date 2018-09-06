@@ -32,7 +32,7 @@ class HistoryAttention(nn.Module):
         # self.attention_net = nn.Conv1d(att_hidden_size, 1, 1, 1)
         # self.projection_net = nn.Linear(hidden_size, hidden_size)
 
-        self.locked_dropout = LockedDropoutForAttention(p=0.75)
+        # self.locked_dropout = LockedDropoutForAttention(p=0.75)
         self.dropout = nn.Dropout(p=0.75)
 
         self.max_history_size = max_history_size
@@ -47,7 +47,7 @@ class HistoryAttention(nn.Module):
 
         if len(self.history) == len(self.history_embs):
             self.history.append(previous)  # list of B x hidden_size tensors
-            previous_emb = self.history_net(self.locked_dropout(previous))  # B x att_hidden_size
+            previous_emb = self.history_net(self.dropout(previous))  # B x att_hidden_size
             self.history_embs.append(previous_emb)
 
             if len(self.history) > self.max_history_size:
@@ -58,7 +58,7 @@ class HistoryAttention(nn.Module):
             if len(self.history) > self.max_history_size:
                 self.history = self.history[-self.max_history_size:]
 
-            self.history_embs = [self.history_net(self.locked_dropout(h)) for h in self.history]
+            self.history_embs = [self.history_net(self.dropout(h)) for h in self.history]
 
         current = self.dropout(current)
         current_emb = self.hidden_net(current)  # B x att_hidden_size
@@ -92,7 +92,7 @@ class HistoryAttention(nn.Module):
             history.append(h.detach())
         self.history = history
         self.history_embs = []
-        self.locked_dropout.init()
+        # self.locked_dropout.init()
 
 
 class DepLSTM(nn.LSTM):

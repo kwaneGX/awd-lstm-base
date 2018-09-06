@@ -20,7 +20,10 @@ class RNNModel(nn.Module):
         self.encoder = nn.Embedding(ntoken, ninp)
         assert rnn_type in ['DepLSTM', 'LSTM', 'QRNN', 'GRU'], 'RNN type is not supported'
         if rnn_type == 'DepLSTM':
-            self.rnns = [DepLSTM(ninp if l == 0 else nhid, nhid if l != nlayers - 1 else (ninp if tie_weights else nhid), 1, dropout=0) for l in range(nlayers)]
+            # self.rnns = [DepLSTM(ninp if l == 0 else nhid, nhid if l != nlayers - 1 else (ninp if tie_weights else nhid), 1, dropout=0) for l in range(nlayers)]
+            self.rnns = [torch.nn.LSTM(ninp, nhid, 1, dropout=0),
+                         torch.nn.LSTM(nhid, nhid, 1, dropout=0),
+                         DepLSTM(nhid, (ninp if tie_weights else nhid), 1, dropout=0)]
             if wdrop:
                 self.rnns = [WeightDrop(rnn, ['weight_hh_l0'], dropout=wdrop) for rnn in self.rnns]
         elif rnn_type == 'LSTM':
@@ -71,10 +74,12 @@ class RNNModel(nn.Module):
         if self.rnn_type == 'DepLSTM':
             if self.wdrop:
                 for rnn in self.rnns:
-                    rnn.module.attention.reset_history()
+                    if rnn.module._get_name() != 'LSTM':
+                        rnn.module.attention.reset_history()
             else:
                 for rnn in self.rnns:
-                    rnn.attention.reset_history()
+                    if rnn.module._get_name() != 'LSTM':
+                        rnn.attention.reset_history()
         torch.cuda.empty_cache()
         collected = gc.collect()
 
