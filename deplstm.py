@@ -4,15 +4,21 @@ import settings
 
 
 class LockedDropoutForAttention(nn.Module):
-    def __init__(self):
+    def __init__(self, p=0.75):
         super().__init__()
+        self.p = p
+        self.mask = None
 
-    def forward(self, x, dropout=0.5):
-        if not self.training or not dropout:
+    def forward(self, x):
+        if not self.training:
             return x
-        mask = x.data.new(x.size(0), x.size(1), 1).bernoulli_(1 - dropout) / (1 - dropout)
-        mask = mask.expand_as(x)
-        return mask * x
+        if self.mask is None:
+            self.mask = x.data.new(x.size(0), x.size(1)).bernoulli_(1 - self.p) / (1 - self.p)
+
+        return self.mask * x
+
+    def init(self):
+        self.mask = None
 
 
 class HistoryAttention(nn.Module):
@@ -25,9 +31,9 @@ class HistoryAttention(nn.Module):
 
         # self.attention_net = nn.Conv1d(att_hidden_size, 1, 1, 1)
         # self.projection_net = nn.Linear(hidden_size, hidden_size)
-        # self.locked_dropout = LockedDropoutForAttention()
 
-        self.dropout = nn.Dropout(p=0.5)
+        self.locked_dropout = LockedDropoutForAttention(p=0.75)
+        self.dropout = nn.Dropout(p=0.75)
 
         self.max_history_size = max_history_size
         self.p = p
@@ -39,27 +45,20 @@ class HistoryAttention(nn.Module):
 
     def forward(self, current, previous):  # both in B x hidden_size
 
-        r"""For debugging"""
-        # if torch.max(current.view(-1)) > 10 or torch.max(previous.view(-1)) > 10:
-        #     print('trap')
-        # print(previous.view(-1)[(previous.view(-1) > 10).nonzero()[0][0].item()].item())
-        # print(current.view(-1)[(current.view(-1) > 10).nonzero()[0][0].item()].item())
-        r"""==============="""
-
         if len(self.history) == len(self.history_embs):
             self.history.append(previous)  # list of B x hidden_size tensors
-            previous_emb = self.history_net(self.dropout(previous))  # B x att_hidden_size
+            previous_emb = self.history_net(self.locked_dropout(previous))  # B x att_hidden_size
             self.history_embs.append(previous_emb)
 
             if len(self.history) > self.max_history_size:
                 self.history = self.history[-self.max_history_size:]
                 self.history_embs = self.history_embs[-self.max_history_size:]
         else:
-            self.history.append(previous)
+            self.history.append(previous)  # list of B x hidden_size tensors
             if len(self.history) > self.max_history_size:
                 self.history = self.history[-self.max_history_size:]
 
-            self.history_embs = [self.history_net(self.dropout(h)) for h in self.history]
+            self.history_embs = [self.history_net(self.locked_dropout(h)) for h in self.history]
 
         current = self.dropout(current)
         current_emb = self.hidden_net(current)  # B x att_hidden_size
@@ -93,6 +92,7 @@ class HistoryAttention(nn.Module):
             history.append(h.detach())
         self.history = history
         self.history_embs = []
+        self.locked_dropout.init()
 
 
 class DepLSTM(nn.LSTM):

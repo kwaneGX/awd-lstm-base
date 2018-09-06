@@ -26,12 +26,12 @@ class HistoryAttention(nn.Module):
         self.hidden_net = nn.Linear(input_size, 1)  # Ju
 
         # self.attention_net = nn.Conv1d(att_hidden_size, 1, 1, 1)
-        self.attention_net = nn.Conv1d(2, 1, 1, 1)
+        # self.attention_net = nn.Conv1d(2, 1, 1, 1)
 
         # self.projection_net = nn.Linear(hidden_size, hidden_size)
 
         # self.locked_dropout = LockedDropoutForAttention()
-        self.dropout = nn.Dropout(p=0.5)
+        self.dropout = nn.Dropout(p=0.4)
 
         self.max_history_size = max_history_size
         self.p = p
@@ -51,11 +51,10 @@ class HistoryAttention(nn.Module):
         # print(current.view(-1)[(current.view(-1) > 10).nonzero()[0][0].item()].item())
         r"""==============="""
 
-        previous = self.dropout(previous)
         if len(self.history) == len(self.history_embs):
-            self.history.append(previous * 0.5)  # list of B x hidden_size tensors
+            self.history.append(previous)  # list of B x hidden_size tensors
             previous_emb = self.history_net(previous)  # B x att_hidden_size
-            self.history_embs.append(previous_emb)
+            self.history_embs.append(self.dropout(previous_emb))
 
             if len(self.history) > self.max_history_size:
                 self.history = self.history[-self.max_history_size:]
@@ -65,22 +64,22 @@ class HistoryAttention(nn.Module):
             if len(self.history) > self.max_history_size:
                 self.history = self.history[-self.max_history_size:]
 
-            self.history_embs = [self.history_net(h) for h in self.history]
+            self.history_embs = [self.history_net(self.dropout(h)) for h in self.history]
 
-        # current = self.dropout(current)  # taken by Ju
+        current = self.dropout(current)
         current_emb = self.hidden_net(current)  # B x att_hidden_size
 
-        # history_embs = torch.stack(self.history_embs, dim=2)  # B x att_hidden_size x history_length # taken by Ju
+        history_embs = torch.stack(self.history_embs, dim=2)  # B x att_hidden_size x history_length
 
         r"""Two layer perceptron: concat (prev context, current word) -> att probs"""
-        if len(self.history) > 1:
-            history_embs_reshaped = torch.stack(self.history_embs).squeeze().t().unsqueeze(1)  # Ju
-        else:
-            history_embs_reshaped = torch.stack(self.history_embs).squeeze(0).unsqueeze(2)
-        current_embs_reshaped = current_emb.unsqueeze(0).squeeze().unsqueeze(1).unsqueeze(2).expand_as(
-            history_embs_reshaped)  # Ju
-        att_scores = self.attention_net(torch.cat((history_embs_reshaped, current_embs_reshaped), dim=1))  # Ju
-        att_probs = torch.softmax(att_scores, dim=2)  # Ju
+        # if len(self.history) > 1:
+        #     history_embs_reshaped = torch.stack(self.history_embs).squeeze().t().unsqueeze(1)  # Ju
+        # else:
+        #     history_embs_reshaped = torch.stack(self.history_embs).squeeze(0).unsqueeze(2)
+        # current_embs_reshaped = current_emb.unsqueeze(0).squeeze().unsqueeze(1).unsqueeze(2).expand_as(
+        #     history_embs_reshaped)  # Ju
+        # att_scores = self.attention_net(torch.cat((history_embs_reshaped, current_embs_reshaped), dim=1))  # Ju
+        # att_probs = torch.softmax(att_scores, dim=2)  # Ju
         r"""======================================================================="""
 
         # B x att_hidden_size x history_length
@@ -89,7 +88,7 @@ class HistoryAttention(nn.Module):
         # hidden_embs = torch.tanh(history_embs + current_emb.unsqueeze(2).expand_as(history_embs))
 
         # att_scores = self.attention_net(hidden_embs)  # B x 1 x history_length
-        # att_probs = torch.softmax(history_embs + current_emb.unsqueeze(2).expand_as(history_embs), dim=2)  # taken by Ju
+        att_probs = torch.softmax(history_embs + current_emb.unsqueeze(2).expand_as(history_embs), dim=2)
         # att_probs = torch.softmax(att_scores, dim=2)  # B x 1 x history_length
 
         history = torch.stack(self.history, dim=2)  # B x hidden_size x history_length
