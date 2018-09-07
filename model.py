@@ -21,9 +21,12 @@ class RNNModel(nn.Module):
         assert rnn_type in ['DepLSTM', 'LSTM', 'QRNN', 'GRU'], 'RNN type is not supported'
         if rnn_type == 'DepLSTM':
             # self.rnns = [DepLSTM(ninp if l == 0 else nhid, nhid if l != nlayers - 1 else (ninp if tie_weights else nhid), 1, dropout=0) for l in range(nlayers)]
-            self.rnns = [torch.nn.LSTM(ninp, nhid, 1, dropout=0),
-                         torch.nn.LSTM(nhid, nhid, 1, dropout=0),
-                         DepLSTM(nhid, (ninp if tie_weights else nhid), 1, dropout=0)]
+            self.rnns = [DepLSTM(ninp, nhid, 1, dropout=0),
+                         DepLSTM(nhid, nhid, 1, dropout=0),
+                         nn.LSTM(nhid, (ninp if tie_weights else nhid), 1, dropout=0)]
+            # self.rnns = [nn.LSTM(ninp, nhid, 1, dropout=0),
+            #              DepLSTM(nhid, nhid, 1, dropout=0),
+            #              DepLSTM(nhid, (ninp if tie_weights else nhid), 1, dropout=0)]
             if wdrop:
                 self.rnns = [WeightDrop(rnn, ['weight_hh_l0'], dropout=wdrop) for rnn in self.rnns]
         elif rnn_type == 'LSTM':
@@ -92,16 +95,6 @@ class RNNModel(nn.Module):
     def forward(self, input, hidden, ith=None, return_h=False):
         emb = embedded_dropout(self.encoder, input, dropout=self.dropoute if self.training else 0)
         #emb = self.idrop(emb)
-        if len((emb != emb).nonzero()) > 0:
-            print('trap')
-        # aaa = torch.stack([p.data for p in self.encoder.parameters()]).view(-1)
-        # print('max enconder weight', torch.max(aaa).item())
-        # settings.writer.add_scalar('data/enc_w', torch.max(aaa).item(), ith)
-        # for i in range(3):
-            # print('hidden at %d: ' % i, torch.max(hidden[i][0].view(-1)).item())
-            # print('cellst at %d: ' % i, torch.max(hidden[i][1].view(-1)).item())
-            # settings.writer.add_scalars('data/hid_cel_w%d:' % i, {'hid': torch.max(hidden[i][0].view(-1)).item(),
-            #                                                       'cel': torch.max(hidden[i][1].view(-1)).item()}, ith)
 
         emb = self.lockdrop(emb, self.dropouti)
 
