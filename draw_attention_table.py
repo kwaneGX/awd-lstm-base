@@ -82,11 +82,6 @@ if torch.cuda.is_available():
     else:
         torch.cuda.manual_seed(args.seed)
 
-# added by Ju
-writer = SummaryWriter()
-settings.set_writer(writer)
-logfile = open('logs/%s.%s.txt' % (args.save, datetime.datetime.now().isoformat()), 'w')
-
 ###############################################################################
 # Load data
 ###############################################################################
@@ -125,7 +120,7 @@ from splitcross import SplitCrossEntropyLoss
 criterion = None
 
 ntokens = len(corpus.dictionary)
-model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop, args.tied, logfile)
+model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop, args.tied)
 ###
 if args.resume:
     print('Resuming model ...')
@@ -158,9 +153,7 @@ if args.cuda:
 params = list(model.parameters()) + list(criterion.parameters())
 total_params = sum(x.size()[0] * x.size()[1] if len(x.size()) > 1 else x.size()[0] for x in params if x.size())
 print('Args:', args)
-print('Args: %s' % args, file=logfile)
 print('Model total parameters:', total_params)
-print('Model total parameters: %s' % total_params, file=logfile)
 
 ###############################################################################
 # Training code
@@ -188,70 +181,6 @@ def evaluate(data_source, batch_size=10):
             hidden = repackage_hidden(hidden)
     return total_loss.item() / len(data_source)
 
-
-def train(epoch):
-    # Turn on training mode which enables dropout.
-    model.reset()
-    total_loss = 0
-    total_loss_log = 0
-    start_time = time.time()
-    ntokens = len(corpus.dictionary)
-    hidden = model.init_hidden(args.batch_size)
-    batch, i = 0, 0
-    while i < train_data.size(0) - 1 - 1:
-        bptt = args.bptt if np.random.random() < 0.95 else args.bptt / 2.
-        # Prevent excessively small or negative sequence lengths
-        seq_len = max(5, int(np.random.normal(bptt, 5)))
-        # There's a very small chance that it could select a very long sequence length resulting in OOM
-        # seq_len = min(seq_len, args.bptt + 10)
-
-        lr2 = optimizer.param_groups[0]['lr']
-        optimizer.param_groups[0]['lr'] = lr2 * seq_len / args.bptt
-        model.train()
-        data, targets = get_batch(train_data, i, args, seq_len=seq_len)
-
-        # Starting each batch, we detach the hidden state from how it was previously produced.
-        # If we didn't, the model would try backpropagating all the way to start of the dataset.
-        hidden = repackage_hidden(hidden)
-        optimizer.zero_grad()
-
-        output, hidden, rnn_hs, dropped_rnn_hs = model(data, hidden, i, return_h=True)
-        raw_loss = criterion(model.decoder.weight, model.decoder.bias, output, targets)
-
-        loss = raw_loss
-        # Activiation Regularization
-        if args.alpha: loss = loss + sum(args.alpha * dropped_rnn_h.pow(2).mean() for dropped_rnn_h in dropped_rnn_hs[-1:])
-        # Temporal Activation Regularization (slowness)
-        if args.beta: loss = loss + sum(args.beta * (rnn_h[1:] - rnn_h[:-1]).pow(2).mean() for rnn_h in rnn_hs[-1:])
-        loss.backward()
-
-        # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
-        if args.clip: torch.nn.utils.clip_grad_norm_(params, args.clip)
-        optimizer.step()
-
-        total_loss += raw_loss.data
-        total_loss_log += raw_loss.data
-        optimizer.param_groups[0]['lr'] = lr2
-        if batch % args.log_interval == 0 and batch > 0:
-            cur_loss = total_loss.item() / args.log_interval
-            elapsed = time.time() - start_time
-            logstr = '| epoch {:3d} | {:5d}/{:5d} batches | lr {:05.5f} | ms/batch {:5.2f} | loss {:5.2f} ' \
-                     '| ppl {:8.2f} | bpc {:8.3f}'.format(
-                     epoch, batch, len(train_data) // args.bptt, optimizer.param_groups[0]['lr'],
-                     elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss), cur_loss / math.log(2))
-            print(logstr)
-            print(logstr, file=logfile)
-            total_loss = 0
-            start_time = time.time()
-
-        ###
-        batch += 1
-        i += seq_len
-
-    # added by Ju
-    return total_loss_log.item() / batch
-
-
 # Loop over epochs.
 lr = args.lr
 best_val_loss = []
@@ -267,7 +196,6 @@ try:
         optimizer = torch.optim.Adam(params, lr=args.lr, weight_decay=args.wdecay)
     for epoch in range(1, args.epochs+1):
         epoch_start_time = time.time()
-        # trn_loss = train(epoch)
         trn_loss = 0;
         if 't0' in optimizer.param_groups[0]:
             tmp = {}
@@ -277,20 +205,11 @@ try:
 
             val_loss2 = evaluate(val_data)
             print('-' * 89)
-            print('-' * 89, file=logfile)
             logstr = '| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | valid ppl {:8.2f} ' \
                      '| valid bpc {:8.3f}'.format(epoch, (time.time() - epoch_start_time),
                                                   val_loss2, math.exp(val_loss2), val_loss2 / math.log(2))
             print(logstr)
-            print(logstr, file=logfile)
             print('-' * 89)
-            print('-' * 89, file=logfile)
-
-            # added by Ju
-            writer.add_scalars('data/trnval_loss', {'trn_loss: ': trn_loss,
-                                                    'val_loss: ': val_loss2}, epoch)
-            writer.add_scalars('data/trnval_ppl', {'trn_ppl: ': math.exp(trn_loss),
-                                                  'val_ppl: ': math.exp(val_loss2)}, epoch)
 
             if val_loss2 < stored_loss:
                 model_save(args.save)
@@ -303,25 +222,15 @@ try:
         else:
             val_loss = evaluate(val_data, eval_batch_size)
             print('-' * 89)
-            print('-' * 89, file=logfile)
             logstr = '| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | valid ppl {:8.2f} | ' \
                      'valid bpc {:8.3f}'.format(epoch, (time.time() - epoch_start_time), val_loss,
                                                 math.exp(val_loss), val_loss / math.log(2))
             print(logstr)
-            print(logstr, file=logfile)
             print('-' * 89)
-            print('-' * 89, file=logfile)
-
-            # added by Ju
-            writer.add_scalars('data/trnval_loss', {'trn_loss: ': trn_loss,
-                                                    'val_loss: ': val_loss}, epoch)
-            writer.add_scalars('data/trnval_ppl', {'trn_ppl: ': math.exp(trn_loss),
-                                                  'val_ppl: ': math.exp(val_loss)}, epoch)
 
             if val_loss < stored_loss:
                 model_save(args.save)
                 print('Saving model (new best validation)')
-                print('Saving model (new best validation)', file=logfile)
                 stored_loss = val_loss
 
             # taken out due to awd deplstm causes this
@@ -340,8 +249,6 @@ try:
 except KeyboardInterrupt:
     print('-' * 89)
     print('Exiting from training early')
-    print('-' * 89, file=logfile)
-    print('Exiting from training early', file=logfile)
 
 
 # Load the best saved model.
@@ -350,16 +257,7 @@ model_load(args.save)
 # Run on test data.
 test_loss = evaluate(test_data, test_batch_size)
 print('=' * 89)
-print('=' * 89, file=logfile)
 logstr = '| End of training | test loss {:5.2f} | test ppl {:8.2f} | ' \
          'test bpc {:8.3f}'.format(test_loss, math.exp(test_loss), test_loss / math.log(2))
 print(logstr)
-print(logstr, file=logfile)
 print('=' * 89)
-print('=' * 89, file=logfile)
-
-# added by Ju
-writer.add_scalar('data/test_loss', test_loss, epoch)
-writer.add_scalar('data/test_ppl', math.exp(test_loss), epoch)
-writer.export_scalars_to_json("./all_scalars.json")
-writer.close()
