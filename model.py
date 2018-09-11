@@ -20,10 +20,10 @@ class RNNModel(nn.Module):
         self.encoder = nn.Embedding(ntoken, ninp)
         assert rnn_type in ['DepLSTM', 'LSTM', 'QRNN', 'GRU'], 'RNN type is not supported'
         if rnn_type == 'DepLSTM':
-            self.rnns = [DepLSTM(ninp if l == 0 else nhid, nhid if l != nlayers - 1 else (ninp if tie_weights else nhid), 1, dropout=0) for l in range(nlayers)]
-            # self.rnns = [DepLSTM(ninp, nhid, 1, dropout=0),
-            #              nn.LSTM(nhid, nhid, 1, dropout=0),
-            #              DepLSTM(nhid, (ninp if tie_weights else nhid), 1, dropout=0)]
+            # self.rnns = [DepLSTM(ninp if l == 0 else nhid, nhid if l != nlayers - 1 else (ninp if tie_weights else nhid), 1, dropout=0) for l in range(nlayers)]
+            self.rnns = [nn.LSTM(ninp, nhid, 1, dropout=0),
+                         nn.LSTM(nhid, nhid, 1, dropout=0),
+                         DepLSTM(nhid, (ninp if tie_weights else nhid), 1, dropout=0)]
             # self.rnns = [nn.LSTM(ninp, nhid, 1, dropout=0),
             #              DepLSTM(nhid, nhid, 1, dropout=0),
             #              DepLSTM(nhid, (ninp if tie_weights else nhid), 1, dropout=0)]
